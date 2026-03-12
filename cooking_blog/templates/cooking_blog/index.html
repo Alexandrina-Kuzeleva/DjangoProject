@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -46,7 +47,7 @@
                         </div>
                     </div>
                     <div class="col-lg-6 d-none d-lg-block">
-                        <img src="../src/images/main.png" class="img-fluid rounded-5 shadow-lg" alt="Eco food">
+                        <img src="{% static 'src/images/main.png' %}" class="img-fluid rounded-5 shadow-lg" alt="Eco food">
                     </div>
                 </div>
             </div>
@@ -65,7 +66,7 @@
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
                             <div class="ratio ratio-4x3">
-                                <img src="../src/images/greensalad.png" class="card-img-top object-fit-cover" alt="Салат">
+                                <img src="{% static 'images/greensalad.png' %}" class="card-img-top object-fit-cover" alt="Салат">
                             </div>
                             <div class="card-body p-4 d-flex flex-column">
                                 <h5 class="card-title fw-bold">Зеленый салат</h5>
@@ -78,7 +79,7 @@
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
                             <div class="ratio ratio-4x3">
-                                <img src="../src/images/bowl.png" class="card-img-top object-fit-cover" alt="Боул">
+                                <img src="{% static 'images/bowl.png' %}" class="card-img-top object-fit-cover" alt="Боул">
                             </div>
                             <div class="card-body p-4 d-flex flex-column">
                                 <h5 class="card-title fw-bold">Киноа боул с овощами</h5>
@@ -91,7 +92,7 @@
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
                             <div class="ratio ratio-4x3">
-                                <img src="../src/images/smoothie.png" class="card-img-top object-fit-cover" alt="Смузи">
+                                <img src="{% static 'images/smoothie.png' %}" class="card-img-top object-fit-cover" alt="Смузи">
                             </div>
                             <div class="card-body p-4 d-flex flex-column">
                                 <h5 class="card-title fw-bold">Ягодный смузи</h5>
