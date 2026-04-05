@@ -39,12 +39,20 @@
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
                     <div class="ratio ratio-4x3">
-                        <img src="{% static recipe.image %}" class="card-img-top object-fit-cover" alt="{{ recipe.name }}">
+                        <img src="https://placehold.co/600x400/198754/white?text=Recipe+Photo" class="card-img-top object-fit-cover" alt="{{ recipe.title }}">
                     </div>
                     <div class="card-body p-4 d-flex flex-column">
-                        <h5 class="card-title fw-bold">{{ recipe.name }}</h5>
-                        <p class="card-text text-muted">{{ recipe.description }}</p>
-                        <a href="#" class="btn btn-success w-100 rounded-pill mt-auto">{{ recipe.button_text }}</a>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-success rounded-pill">
+                                {{ recipe.get_category_display }}
+                            </span>
+                            <span class="badge bg-light text-dark rounded-pill">
+                                {{ recipe.cooking_time }} мин
+                            </span>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ recipe.title }}</h5>
+                        <p class="card-text text-muted">{{ recipe.description|truncatewords:15 }}</p>
+                        <a href="#" class="btn btn-success w-100 rounded-pill mt-auto">Смотреть рецепт</a>
                     </div>
                 </div>
             </div>

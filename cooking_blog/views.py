@@ -1,8 +1,9 @@
 from django.shortcuts import render
-
-# Create your views here.
+from .models import Recipe
 
 def index(request):
+    recipes = Recipe.objects.filter(is_published=True)
+    
     context = {
         'title': 'Главная страница',
         'welcome_text': 'Добро пожаловать на наш лучший кулинарный блог!',
@@ -11,27 +12,8 @@ def index(request):
         'hero_accent': 'здоровая еда',
         'hero_description': 'Откройте для себя мир органических рецептов от поваров со всего мира',
         'recipes_title': 'Популярные рецепты',
-        'recipes_subtitle': 'Лучшие рецепты месяца',
-        'recipes': [
-            {
-                'name': 'Зеленый салат',
-                'description': 'Микс из листовых салатов с лимонной заправкой',
-                'image': 'images/greensalad.png',
-                'button_text': 'Рецепт'
-            },
-            {
-                'name': 'Киноа боул с овощами',
-                'description': 'Сытный завтрак из киноа, овощей и тофу, богатый белком и клетчаткой',
-                'image': 'images/bowl.png',
-                'button_text': 'Рецепт'
-            },
-            {
-                'name': 'Ягодный смузи',
-                'description': 'Освежающий смузи из лесных ягод',
-                'image': 'images/smoothie.png',
-                'button_text': 'Рецепт'
-            },
-        ]
+        'recipes_subtitle': f'Всего рецептов: {recipes.count()}',
+        'recipes': recipes,
     }
     return render(request, 'cooking_blog/index.html', context)
 
