@@ -52,7 +52,7 @@
                         </div>
                         <h5 class="card-title fw-bold">{{ recipe.title }}</h5>
                         <p class="card-text text-muted">{{ recipe.description|truncatewords:15 }}</p>
-                        <a href="#" class="btn btn-success w-100 rounded-pill mt-auto">Смотреть рецепт</a>
+                        <a href="{{ recipe.get_absolute_url }}" class="btn btn-success w-100 rounded-pill mt-auto">Смотреть рецепт</a>
                     </div>
                 </div>
             </div>

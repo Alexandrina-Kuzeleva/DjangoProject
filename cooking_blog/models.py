@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 class Recipe(models.Model): 
     class Category(models.TextChoices):
@@ -38,3 +39,6 @@ class Recipe(models.Model):
     
     def __str__(self):
         return self.title
+    
+    def get_absolute_url(self):
+        return reverse('recipe_detail', args=[self.pk])
