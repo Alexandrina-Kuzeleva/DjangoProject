@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from .models import Recipe
 
 def index(request):
@@ -38,3 +38,10 @@ def categories(request):
         ]
     }
     return render(request, 'cooking_blog/categories.html', context)
+
+def recipe_detail(request, pk):
+    recipe = get_object_or_404(Recipe, pk=pk, is_published=True)
+    context = {
+        'recipe': recipe,
+    }
+    return render(request, 'cooking_blog/detail.html', context)
