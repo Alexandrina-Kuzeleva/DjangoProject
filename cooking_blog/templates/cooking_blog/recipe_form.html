@@ -1,0 +1,59 @@
+{% extends 'cooking_blog/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | ACooking{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-success">Главная</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+                    </ol>
+                </nav>
+
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-white border-0 pt-4 pb-0">
+                        <h1 class="h2 fw-bold mb-0">{{ title }}</h1>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
+                                    {{ field.label }}
+                                </label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                <div class="form-text text-muted">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% if field.errors %}
+                                <div class="alert alert-danger mt-2 py-2">
+                                    {{ field.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                            
+                            <div class="d-flex gap-3 mt-4 pt-2">
+                                <button type="submit" class="btn btn-success px-5 rounded-pill">
+                                    {{ button_text }}
+                                </button>
+                                <a href="{% if recipe %}{% url 'recipe_detail' recipe.pk %}{% else %}{% url 'home' %}{% endif %}" 
+                                   class="btn btn-outline-secondary rounded-pill px-4">
+                                    Отмена
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

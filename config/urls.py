@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from cooking_blog.views import index, categories, recipe_detail, contact
+from cooking_blog.views import index, categories, recipe_detail, contact,recipe_create,recipe_edit
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,4 +25,6 @@ urlpatterns = [
     path('categories/', categories, name='categories'),
     path('recipe/<int:pk>/', recipe_detail, name='recipe_detail'),
     path('contact/', contact, name='contact'),
+        path('recipe/create/', recipe_create, name='recipe_create'),
+    path('recipe/<int:pk>/edit/', recipe_edit, name='recipe_edit'),
 ]
