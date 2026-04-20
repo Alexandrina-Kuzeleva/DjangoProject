@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Recipe
-from .forms import FeedbackForm
+from .forms import FeedbackForm, RecipeForm
 
 def index(request):
     recipes = Recipe.objects.filter(is_published=True)
@@ -74,3 +74,38 @@ def contact(request):
         'success': success,
     }
     return render(request, 'cooking_blog/contact.html', context)
+
+def recipe_create(request):
+    if request.method == 'POST':
+        form = RecipeForm(request.POST)
+        if form.is_valid():
+            recipe = form.save()
+            return redirect('recipe_detail', pk=recipe.pk)
+    else:
+        form = RecipeForm()
+    
+    context = {
+        'form': form,
+        'title': 'Создание нового рецепта',
+        'button_text': 'Создать рецепт',
+    }
+    return render(request, 'cooking_blog/recipe_form.html', context)
+
+def recipe_edit(request, pk):
+    recipe = get_object_or_404(Recipe, pk=pk)
+    
+    if request.method == 'POST':
+        form = RecipeForm(request.POST, instance=recipe)
+        if form.is_valid():
+            recipe = form.save()
+            return redirect('recipe_detail', pk=recipe.pk)
+    else:
+        form = RecipeForm(instance=recipe)
+    
+    context = {
+        'form': form,
+        'title': 'Редактирование рецепта',
+        'button_text': 'Сохранить изменения',
+        'recipe': recipe,
+    }
+    return render(request, 'cooking_blog/recipe_form.html', context)
