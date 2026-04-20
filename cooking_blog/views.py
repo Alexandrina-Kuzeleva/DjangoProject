@@ -1,5 +1,6 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from .models import Recipe
+from .forms import FeedbackForm
 
 def index(request):
     recipes = Recipe.objects.filter(is_published=True)
@@ -45,3 +46,31 @@ def recipe_detail(request, pk):
         'recipe': recipe,
     }
     return render(request, 'cooking_blog/detail.html', context)
+
+def contact(request):
+    success = False
+    if request.method == 'POST':
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['subject']
+            email = form.cleaned_data['email']
+            text = form.cleaned_data['text']
+            
+            print(f'Данные')
+            print(f'От: {email}')
+            print(f'Тема: {subject}')
+            print(f'Сообщение:')
+            print(text)
+            
+            success = True
+            form = FeedbackForm()
+    else:
+        form = FeedbackForm()
+    
+    context = {
+        'form': form,
+        'title': 'Свяжитесь с нами',
+        'subtitle': 'Задайте вопрос, оставьте отзыв или поделитесь идеей рецепта',
+        'success': success,
+    }
+    return render(request, 'cooking_blog/contact.html', context)

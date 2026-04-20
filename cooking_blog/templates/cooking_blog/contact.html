@@ -1,0 +1,70 @@
+{% extends 'cooking_blog/base.html' %}
+{% load static %}
+
+{% block title %}Контакты | ACooking{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-success">Главная</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Контакты</li>
+                    </ol>
+                </nav>
+
+                <div class="text-center mb-5">
+                    <h1 class="display-4 fw-bold mb-3">{{ title }}</h1>
+                    <p class="lead text-secondary">{{ subtitle }}</p>
+                </div>
+
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-7">
+                        {% if success %}
+                        <div class="alert alert-success rounded-4 text-center" role="alert">
+                            <h4 class="mt-2 mb-1">Сообщение отправлено!</h4>
+                            <p class="mb-0">Спасибо за обращение. Мы ответим вам в ближайшее время.</p>
+                        </div>
+                        {% endif %}
+
+                        <div class="card border-0 shadow-sm rounded-4 {% if success %}mt-4{% endif %}">
+                            <div class="card-body p-4">
+                                <h3 class="h4 fw-bold mb-4 text-center">Напишите нам</h3>
+                                
+                                <form method="post">
+                                    {% csrf_token %}
+                                    
+                                    {% for field in form %}
+                                    <div class="mb-3">
+                                        <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
+                                            {{ field.label }}
+                                            {% if field.field.required %}
+                                                <span class="text-danger">*</span>
+                                            {% endif %}
+                                        </label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                        <div class="alert alert-danger mt-2 py-2">
+                                            {{ field.errors }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                    
+                                    <div class="text-center mt-4">
+                                        <button type="submit" class="btn btn-success rounded-pill px-5">
+                                            Отправить сообщение
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
