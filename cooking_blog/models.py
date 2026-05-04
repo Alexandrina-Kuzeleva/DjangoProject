@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.contrib.auth.models import User
 
 class Recipe(models.Model): 
     class Category(models.TextChoices):
@@ -32,6 +33,12 @@ class Recipe(models.Model):
     )
     is_published = models.BooleanField(default=True, verbose_name='Опубликовано')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    author = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='recipes',
+        verbose_name='Автор'
+    )
     
     class Meta:
         verbose_name = 'Рецепт'

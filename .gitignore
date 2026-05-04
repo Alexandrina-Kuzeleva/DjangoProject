@@ -16,6 +16,7 @@ media/
 staticfiles/
 static_root/
 media_root/
+migrations/
 
 *.env
 .env.local
