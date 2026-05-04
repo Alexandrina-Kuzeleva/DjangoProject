@@ -1,7 +1,7 @@
 {% extends 'cooking_blog/base.html' %}
 {% load static %}
 
-{% block title %}{{ recipe.title }} ACooking{% endblock %}
+{% block title %}{{ recipe.title }} | ACooking{% endblock %}
 
 {% block content %}
 <section class="py-5">
@@ -16,9 +16,17 @@
                 </nav>
 
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                    <div class="ratio ratio-16x9 bg-success bg-opacity-10 d-flex align-items-center justify-content-center">
-                        <div class="text-muted large text-center">{{ recipe.get_category_display }}</div>
+                    {% if recipe.image %}
+                    <div class="ratio ratio-16x9">
+                        <img src="{{ recipe.image.url }}" class="card-img-top" alt="{{ recipe.title }}" style="object-fit: cover;">
                     </div>
+                    {% else %}
+                    <div class="ratio ratio-16x9 bg-success bg-opacity-10 d-flex align-items-center justify-content-center">
+                        <div class="text-muted text-center">
+                            <span class="display-6">{{ recipe.get_category_display }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
                     
                     <div class="card-body p-4 p-lg-5">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -29,13 +37,24 @@
                                 {{ recipe.cooking_time }} минут
                             </span>
                             {% if user.is_authenticated and recipe.author == user %}
-                            <a href="{% url 'recipe_edit' recipe.pk %}" class="btn btn-outline-warning btn-sm rounded-pill me-2">
+                            <a href="{% url 'recipe_edit' recipe.pk %}" class="btn btn-outline-warning btn-sm rounded-pill">
                                 Редактировать
                             </a>
                             {% endif %}
                         </div>
 
                         <h1 class="display-5 fw-bold mb-4">{{ recipe.title }}</h1>
+                        
+                        {% if recipe.tags.all %}
+                        <div class="mb-4">
+                            <strong class="me-2">Теги:</strong>
+                            {% for tag in recipe.tags.all %}
+                            <a href="{% url 'tag_recipes' tag.slug %}" class="badge bg-secondary text-white text-decoration-none me-1 px-3 py-2">
+                                #{{ tag.name }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                         
                         <div class="row g-4 mb-5">
                             <div class="col-md-6">

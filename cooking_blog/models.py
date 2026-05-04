@@ -2,6 +2,25 @@ from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
 
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name='Название тега')
+    slug = models.SlugField(max_length=50, unique=True, blank=True, verbose_name='URL')
+    
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+    
+    def __str__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self.name.lower().replace(' ', '-')
+        super().save(*args, **kwargs)
+    
+    def get_absolute_url(self):
+        return reverse('tag_recipes', args=[self.slug])
+
 class Recipe(models.Model): 
     class Category(models.TextChoices):
         BREAKFAST = 'breakfast', 'Завтрак'
@@ -38,6 +57,18 @@ class Recipe(models.Model):
         on_delete=models.CASCADE, 
         related_name='recipes',
         verbose_name='Автор'
+    )
+    image = models.ImageField(
+        upload_to='recipes/',
+        blank=True,
+        null=True,
+        verbose_name='Изображение'
+    )
+    tags = models.ManyToManyField(
+        Tag,
+        blank=True,
+        related_name='recipes',
+        verbose_name='Теги'
     )
     
     class Meta:

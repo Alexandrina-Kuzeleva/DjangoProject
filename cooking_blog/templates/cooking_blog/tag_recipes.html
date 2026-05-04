@@ -1,41 +1,28 @@
 {% extends 'cooking_blog/base.html' %}
 {% load static %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}{{ title }} | ACooking{% endblock %}
 
 {% block content %}
-<section class="py-5 bg-success-subtle">
-    <div class="container py-5">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-3 fw-bold text-dark mb-4">
-                    {{ hero_title }} <br>
-                    <span class="text-success">{{ hero_accent }}</span>
-                </h1>
-                <p class="lead text-secondary mb-5">{{ hero_description }}</p>
-                <div class="d-flex justify-content-between align-items-end mb-5">
-                    <div>
-                        <h2 class="fw-bold">{{ recipes_title }}</h2>
-                        <p class="text-muted">{{ recipes_subtitle }}</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 d-none d-lg-block">
-                <img src="{% static hero_img %}" class="img-fluid rounded-5 shadow-lg" alt="Eco food">
-            </div>
-        </div>
-    </div>
-</section>
-
 <section class="py-5">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-end mb-5">
-            <div>
-                <h2 class="fw-bold">{{ recipes_title }}</h2>
-                <p class="text-muted">{{ recipes_subtitle }}</p>
+        <div class="mb-5">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-success">Главная</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <h1 class="display-5 fw-bold mb-2">{{ recipes_title }}</h1>
+                    <p class="text-muted">{{ recipes_subtitle }}</p>
+                </div>
             </div>
         </div>
 
+        {% if recipes %}
         <div class="row g-4">
             {% for recipe in recipes %}
             <div class="col-12 col-md-6 col-lg-4">
@@ -47,7 +34,7 @@
                     {% else %}
                     <div class="ratio ratio-4x3 bg-success bg-opacity-10 d-flex align-items-center justify-content-center">
                         <div class="text-center">
-                            <span class="display-8">{{ recipe.title }}</span>
+                            <span class="display-4">{{ recipe.get_category_display }}</span>
                         </div>
                     </div>
                     {% endif %}
@@ -63,16 +50,6 @@
                         <h5 class="card-title fw-bold">{{ recipe.title }}</h5>
                         <p class="card-text text-muted">{{ recipe.description|truncatewords:15 }}</p>
                         
-                        {% if recipe.tags.all %}
-                        <div class="mb-2">
-                            {% for tag in recipe.tags.all|slice:":3" %}
-                            <a href="{% url 'tag_recipes' tag.slug %}" class="badge bg-secondary bg-opacity-25 text-dark text-decoration-none me-1">
-                                #{{ tag.name }}
-                            </a>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-                        
                         <div class="d-flex gap-2 mt-auto">
                             <a href="{% url 'recipe_detail' recipe.pk %}" class="btn btn-success w-100 rounded-pill">
                                 Смотреть рецепт
@@ -81,12 +58,17 @@
                     </div>
                 </div>
             </div>
-            {% empty %}
-            <div class="col-12 text-center">
-                <p class="text-muted">Рецепты скоро появятся...</p>
-            </div>
             {% endfor %}
         </div>
+        {% else %}
+        <div class="text-center py-5">
+            <h3 class="mt-3 text-muted">Нет рецептов с этим тегом</h3>
+            <p class="text-secondary">Попробуйте поискать другой тег</p>
+            <a href="{% url 'home' %}" class="btn btn-success rounded-pill mt-2">
+                На главную
+            </a>
+        </div>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

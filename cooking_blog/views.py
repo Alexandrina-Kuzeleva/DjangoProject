@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404, render, redirect
-from .models import Recipe
+from .models import Recipe, Tag
 from .forms import FeedbackForm, RecipeForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login as auth_login
@@ -81,11 +81,19 @@ def contact(request):
 @login_required
 def recipe_create(request):
     if request.method == 'POST':
-        form = RecipeForm(request.POST)
+        form = RecipeForm(request.POST, request.FILES)
         if form.is_valid():
             recipe = form.save(commit=False)
             recipe.author = request.user
             recipe.save()
+            
+            tags_input = form.cleaned_data.get('tags_input')
+            if tags_input:
+                tag_names = [t.strip().lower() for t in tags_input.split(',')]
+                for tag_name in tag_names:
+                    tag, created = Tag.objects.get_or_create(name=tag_name)
+                    recipe.tags.add(tag)
+            
             return redirect('recipe_detail', pk=recipe.pk)
     else:
         form = RecipeForm()
@@ -105,12 +113,22 @@ def recipe_edit(request, pk):
         return redirect('recipe_detail', pk=pk)
     
     if request.method == 'POST':
-        form = RecipeForm(request.POST, instance=recipe)
+        form = RecipeForm(request.POST, request.FILES, instance=recipe)
         if form.is_valid():
             recipe = form.save()
+            
+            recipe.tags.clear()
+            tags_input = form.cleaned_data.get('tags_input')
+            if tags_input:
+                tag_names = [t.strip().lower() for t in tags_input.split(',')]
+                for tag_name in tag_names:
+                    tag, created = Tag.objects.get_or_create(name=tag_name)
+                    recipe.tags.add(tag)
+            
             return redirect('recipe_detail', pk=recipe.pk)
     else:
-        form = RecipeForm(instance=recipe)
+        initial_tags = ', '.join([tag.name for tag in recipe.tags.all()])
+        form = RecipeForm(instance=recipe, initial={'tags_input': initial_tags})
     
     context = {
         'form': form,
@@ -147,3 +165,16 @@ def my_recipes(request):
         'recipes_subtitle': f'Всего рецептов: {recipes.count()}',
     }
     return render(request, 'cooking_blog/my_recipes.html', context)
+
+def tag_recipes(request, slug):
+    tag = get_object_or_404(Tag, slug=slug)
+    recipes = tag.recipes.filter(is_published=True)
+    
+    context = {
+        'tag': tag,
+        'recipes': recipes,
+        'title': f'Рецепты с тегом: {tag.name}',
+        'recipes_title': f'#{tag.name}',
+        'recipes_subtitle': f'Найдено рецептов: {recipes.count()}',
+    }
+    return render(request, 'cooking_blog/tag_recipes.html', context)
