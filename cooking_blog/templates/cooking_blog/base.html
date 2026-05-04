@@ -28,9 +28,34 @@
                         <li class="nav-item">
                             <a class="nav-link btn btn-success border-0 px-3 me-lg-2 text-dark" href="{% url 'contact' %}">Контакты</a>
                         </li>
+                        
+                        {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link btn btn-success px-4 text-dark" href="#">Войти</a>
+                            <a class="nav-link btn btn-success border-0 px-3 me-lg-2 text-dark" href="{% url 'recipe_create' %}">Добавить</a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle btn btn-success border-0 px-3 text-dark" href="#" role="button" data-bs-toggle="dropdown">
+                                Привет, {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'my_recipes' %}">Мои рецепты</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{% url 'logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item text-danger">Выйти</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link btn btn-success border-0 px-3 me-lg-2 text-dark" href="{% url 'login' %}">Вход</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn btn-success px-3 text-dark" href="{% url 'register' %}">Регистрация</a>
+                        </li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>

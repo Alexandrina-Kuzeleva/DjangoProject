@@ -1,6 +1,9 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Recipe
 from .forms import FeedbackForm, RecipeForm
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.decorators import login_required
 
 def index(request):
     recipes = Recipe.objects.filter(is_published=True)
@@ -11,7 +14,7 @@ def index(request):
         'hero_img': 'images/main.png',
         'hero_title': 'ACooking',
         'hero_accent': 'здоровая еда',
-        'hero_description': 'Откройте для себя мир органических рецептов от поваров со всего мира',
+        'hero_description': 'Зарегистрируйтесь, чтобы поделиться своим рецептом!',
         'recipes_title': 'Популярные рецепты',
         'recipes_subtitle': f'Всего рецептов: {recipes.count()}',
         'recipes': recipes,
@@ -75,11 +78,14 @@ def contact(request):
     }
     return render(request, 'cooking_blog/contact.html', context)
 
+@login_required
 def recipe_create(request):
     if request.method == 'POST':
         form = RecipeForm(request.POST)
         if form.is_valid():
-            recipe = form.save()
+            recipe = form.save(commit=False)
+            recipe.author = request.user
+            recipe.save()
             return redirect('recipe_detail', pk=recipe.pk)
     else:
         form = RecipeForm()
@@ -91,8 +97,12 @@ def recipe_create(request):
     }
     return render(request, 'cooking_blog/recipe_form.html', context)
 
+@login_required
 def recipe_edit(request, pk):
     recipe = get_object_or_404(Recipe, pk=pk)
+    
+    if recipe.author != request.user:
+        return redirect('recipe_detail', pk=pk)
     
     if request.method == 'POST':
         form = RecipeForm(request.POST, instance=recipe)
@@ -109,3 +119,31 @@ def recipe_edit(request, pk):
         'recipe': recipe,
     }
     return render(request, 'cooking_blog/recipe_form.html', context)
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user)
+            return redirect('home')
+    else:
+        form = UserCreationForm()
+    
+    context = {
+        'form': form,
+        'title': 'Регистрация',
+    }
+    return render(request, 'registration/register.html', context)
+
+@login_required
+def my_recipes(request):
+    recipes = Recipe.objects.filter(author=request.user, is_published=True)
+    
+    context = {
+        'title': 'Мои рецепты',
+        'recipes': recipes,
+        'recipes_title': 'Мои рецепты',
+        'recipes_subtitle': f'Всего рецептов: {recipes.count()}',
+    }
+    return render(request, 'cooking_blog/my_recipes.html', context)
