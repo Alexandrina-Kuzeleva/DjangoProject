@@ -80,3 +80,17 @@ class Recipe(models.Model):
     
     def get_absolute_url(self):
         return reverse('recipe_detail', args=[self.pk])
+    
+class Comment(models.Model):
+    text = models.TextField(verbose_name='Комментарий')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments', verbose_name='Автор')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='comments', verbose_name='Рецепт')
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+    
+    def __str__(self):
+        return f'Комментарий от {self.author.username} к {self.recipe.title}'

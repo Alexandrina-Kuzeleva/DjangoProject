@@ -1,5 +1,5 @@
 from django import forms
-from .models import Recipe, Tag
+from .models import Recipe, Tag, Comment
 
 class RecipeForm(forms.ModelForm):
     tags_input = forms.CharField(
@@ -59,3 +59,18 @@ class FeedbackForm(forms.Form):
         label='Сообщение',
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Напишите ваш вопрос или пожелание...'})
     )
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['text']
+        widgets = {
+            'text': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Напишите ваш комментарий...'
+            })
+        }
+        labels = {
+            'text': ''
+        }

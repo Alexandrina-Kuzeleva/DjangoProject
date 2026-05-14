@@ -89,6 +89,56 @@
                             </div>
                         </div>
 
+                        <div class="mt-5 pt-4 border-top">
+                            <h3 class="fw-bold mb-4">Комментарии ({{ recipe.comments.count }})</h3>
+                            
+                            {% if user.is_authenticated %}
+                            <div class="card border-0 bg-light rounded-4 mb-4">
+                                <div class="card-body p-4">
+                                    <h5 class="fw-bold mb-3">Оставить комментарий</h5>
+                                    <form method="post" action="{% url 'add_comment' recipe.pk %}">
+                                        {% csrf_token %}
+                                        {{ comment_form.text }}
+                                        <button type="submit" class="btn btn-success rounded-pill px-4 mt-3">
+                                            Отправить
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info rounded-4 text-center">
+                                <p class="mb-0">
+                                    <a href="{% url 'login' %}" class="alert-link">Войдите</a> или 
+                                    <a href="{% url 'register' %}" class="alert-link">зарегистрируйтесь</a>, чтобы оставить комментарий.
+                                </p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if recipe.comments.all %}
+                            <div class="comments-list">
+                                {% for comment in recipe.comments.all %}
+                                <div class="card border-0 shadow-sm rounded-4 mb-3">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <strong class="text-success">{{ comment.author.username }}</strong>
+                                                <span class="text-muted small ms-2">
+                                                    {{ comment.created_at|date:"d E Y, H:i" }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <p class="text-secondary mb-0">{{ comment.text|linebreaks }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <p class="text-muted mt-2 mb-0">Пока нет комментариев. Будьте первым!</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
                         <div class="text-center pt-3 border-top">
                             <a href="{% url 'home' %}" class="btn btn-outline-success btn-lg rounded-pill px-5">
                                 Назад к рецептам
