@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, render, redirect
-from .models import Recipe, Tag
-from .forms import FeedbackForm, RecipeForm
+from .models import Recipe, Tag, Comment
+from .forms import FeedbackForm, RecipeForm, CommentForm
+from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
@@ -45,13 +46,16 @@ def categories(request):
 
 def recipe_detail(request, pk):
     recipe = get_object_or_404(Recipe, pk=pk, is_published=True)
+    comment_form = CommentForm()
     context = {
         'recipe': recipe,
+        'comment_form': comment_form,
     }
     return render(request, 'cooking_blog/detail.html', context)
 
+from django.contrib import messages
+
 def contact(request):
-    success = False
     if request.method == 'POST':
         form = FeedbackForm(request.POST)
         if form.is_valid():
@@ -65,8 +69,10 @@ def contact(request):
             print(f'Сообщение:')
             print(text)
             
-            success = True
-            form = FeedbackForm()
+            messages.success(request, 'Ваше сообщение успешно отправлено! Мы ответим вам в ближайшее время.')
+            return redirect('contact')
+        else:
+            messages.error(request, 'Ошибка при отправке сообщения. Проверьте правильность заполнения полей.')
     else:
         form = FeedbackForm()
     
@@ -74,7 +80,6 @@ def contact(request):
         'form': form,
         'title': 'Свяжитесь с нами',
         'subtitle': 'Задайте вопрос, оставьте отзыв или поделитесь идеей рецепта',
-        'success': success,
     }
     return render(request, 'cooking_blog/contact.html', context)
 
@@ -94,7 +99,10 @@ def recipe_create(request):
                     tag, created = Tag.objects.get_or_create(name=tag_name)
                     recipe.tags.add(tag)
             
+            messages.success(request, f'Рецепт "{recipe.title}" успешно создан!')
             return redirect('recipe_detail', pk=recipe.pk)
+        else:
+            messages.error(request, 'Ошибка при создании рецепта. Проверьте заполнение полей.')
     else:
         form = RecipeForm()
     
@@ -110,6 +118,7 @@ def recipe_edit(request, pk):
     recipe = get_object_or_404(Recipe, pk=pk)
     
     if recipe.author != request.user:
+        messages.error(request, 'Вы не можете редактировать чужой рецепт.')
         return redirect('recipe_detail', pk=pk)
     
     if request.method == 'POST':
@@ -125,7 +134,10 @@ def recipe_edit(request, pk):
                     tag, created = Tag.objects.get_or_create(name=tag_name)
                     recipe.tags.add(tag)
             
+            messages.success(request, f'Рецепт "{recipe.title}" успешно обновлён!')
             return redirect('recipe_detail', pk=recipe.pk)
+        else:
+            messages.error(request, 'Ошибка при обновлении рецепта.')
     else:
         initial_tags = ', '.join([tag.name for tag in recipe.tags.all()])
         form = RecipeForm(instance=recipe, initial={'tags_input': initial_tags})
@@ -144,7 +156,10 @@ def register(request):
         if form.is_valid():
             user = form.save()
             auth_login(request, user)
+            messages.success(request, f'Добро пожаловать, {user.username}! Регистрация прошла успешно.')
             return redirect('home')
+        else:
+            messages.error(request, 'Ошибка регистрации. Проверьте правильность заполнения полей.')
     else:
         form = UserCreationForm()
     
@@ -178,3 +193,19 @@ def tag_recipes(request, slug):
         'recipes_subtitle': f'Найдено рецептов: {recipes.count()}',
     }
     return render(request, 'cooking_blog/tag_recipes.html', context)
+
+def add_comment(request, pk):
+    recipe = get_object_or_404(Recipe, pk=pk)
+    
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.author = request.user
+            comment.recipe = recipe
+            comment.save()
+            messages.success(request, 'Ваш комментарий успешно добавлен!')
+        else:
+            messages.error(request, 'Ошибка при добавлении комментария. Попробуйте снова.')
+        
+        return redirect('recipe_detail', pk=pk)

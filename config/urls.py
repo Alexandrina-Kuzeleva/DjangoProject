@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from cooking_blog.views import index, categories, recipe_detail, recipe_create, recipe_edit, contact, register, my_recipes, tag_recipes
+from cooking_blog.views import index, categories, recipe_detail, recipe_create, recipe_edit, contact, register, my_recipes, tag_recipes, add_comment
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -16,6 +16,7 @@ urlpatterns = [
     path('register/', register, name='register'),
     path('my-recipes/', my_recipes, name='my_recipes'),
     path('tag/<str:slug>/', tag_recipes, name='tag_recipes'),
+    path('recipe/<int:pk>/comment/', add_comment, name='add_comment'),
 ]
 
 if settings.DEBUG:
