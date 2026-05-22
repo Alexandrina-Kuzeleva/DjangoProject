@@ -1,59 +1,174 @@
-from django.shortcuts import get_object_or_404, render, redirect
-from .models import Recipe, Tag, Comment
-from .forms import FeedbackForm, RecipeForm, CommentForm
-from django.contrib import messages
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login as auth_login
-from django.contrib.auth.decorators import login_required
-
-def index(request):
-    recipes = Recipe.objects.filter(is_published=True)
-    
-    context = {
-        'title': 'Главная страница',
-        'welcome_text': 'Добро пожаловать на наш лучший кулинарный блог!',
-        'hero_img': 'images/main.png',
-        'hero_title': 'ACooking',
-        'hero_accent': 'здоровая еда',
-        'hero_description': 'Зарегистрируйтесь, чтобы поделиться своим рецептом!',
-        'recipes_title': 'Популярные рецепты',
-        'recipes_subtitle': f'Всего рецептов: {recipes.count()}',
-        'recipes': recipes,
-    }
-    return render(request, 'cooking_blog/index.html', context)
-
-def categories(request):
-    context = {
-        'categories': [
-            {
-                'name': 'Завтраки',
-                'description': 'Каши, смузи и полезные сэндвичи',
-                'count': 12,
-            },
-            {
-                'name': 'Салаты',
-                'description': 'Салаты из свежих овощей, зелени и полезных заправок',
-                'count': 8,
-            },
-            {
-                'name': 'Супы',
-                'description': 'Лёгкие овощные супы и сытные мясные',
-                'count': 6,
-            },
-        ]
-    }
-    return render(request, 'cooking_blog/categories.html', context)
-
-def recipe_detail(request, pk):
-    recipe = get_object_or_404(Recipe, pk=pk, is_published=True)
-    comment_form = CommentForm()
-    context = {
-        'recipe': recipe,
-        'comment_form': comment_form,
-    }
-    return render(request, 'cooking_blog/detail.html', context)
-
 from django.contrib import messages
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from .models import Recipe, Tag, Comment
+from .forms import RecipeForm, FeedbackForm, CommentForm
+
+class RecipeListView(ListView):
+    model = Recipe
+    template_name = 'cooking_blog/index.html'
+    context_object_name = 'recipes'
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        return Recipe.objects.filter(is_published=True)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Главная страница'
+        context['welcome_text'] = 'Добро пожаловать на наш лучший кулинарный блог!'
+        context['hero_img'] = 'images/main.png'
+        context['hero_title'] = 'ACooking'
+        context['hero_accent'] = 'здоровая еда'
+        context['hero_description'] = 'Откройте для себя мир органических рецептов от поваров со всего мира'
+        context['recipes_title'] = 'Популярные рецепты'
+        context['recipes_subtitle'] = f'Всего рецептов: {self.get_queryset().count()}'
+        return context
+    
+class RecipeDetailView(DetailView):
+    model = Recipe
+    template_name = 'cooking_blog/detail.html'
+    context_object_name = 'recipe'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['comment_form'] = CommentForm()
+        return context
+
+class RecipeCreateView(LoginRequiredMixin, CreateView):
+    model = Recipe
+    form_class = RecipeForm
+    template_name = 'cooking_blog/recipe_form.html'
+    success_url = reverse_lazy('home')
+    
+    def form_valid(self, form):
+        recipe = form.save(commit=False)
+        recipe.author = self.request.user
+        recipe.save()
+        
+        tags_input = form.cleaned_data.get('tags_input')
+        if tags_input:
+            tag_names = [t.strip().lower() for t in tags_input.split(',')]
+            for tag_name in tag_names:
+                tag, created = Tag.objects.get_or_create(name=tag_name)
+                recipe.tags.add(tag)
+        
+        messages.success(self.request, f'Рецепт "{recipe.title}" успешно создан!')
+        return redirect('recipe_detail', pk=recipe.pk)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Ошибка при создании рецепта. Проверьте заполнение полей.')
+        return super().form_invalid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Создание нового рецепта'
+        context['button_text'] = 'Создать рецепт'
+        return context
+
+class RecipeUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Recipe
+    form_class = RecipeForm
+    template_name = 'cooking_blog/recipe_form.html'
+    
+    def test_func(self):
+        recipe = self.get_object()
+        return self.request.user == recipe.author
+    
+    def form_valid(self, form):
+        recipe = form.save()
+        
+        recipe.tags.clear()
+        tags_input = form.cleaned_data.get('tags_input')
+        if tags_input:
+            tag_names = [t.strip().lower() for t in tags_input.split(',')]
+            for tag_name in tag_names:
+                tag, created = Tag.objects.get_or_create(name=tag_name)
+                recipe.tags.add(tag)
+        
+        messages.success(self.request, f'Рецепт "{recipe.title}" успешно обновлён!')
+        return redirect('recipe_detail', pk=recipe.pk)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Ошибка при обновлении рецепта.')
+        return super().form_invalid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Редактирование рецепта'
+        context['button_text'] = 'Сохранить изменения'
+        
+        if self.object:
+            initial_tags = ', '.join([tag.name for tag in self.object.tags.all()])
+            context['form'].fields['tags_input'].initial = initial_tags
+        
+        return context
+
+class RecipeDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Recipe
+    template_name = 'cooking_blog/recipe_confirm_delete.html'
+    success_url = reverse_lazy('home')
+    
+    def test_func(self):
+        recipe = self.get_object()
+        return self.request.user == recipe.author
+    
+    def delete(self, request, *args, **kwargs):
+        recipe = self.get_object()
+        messages.success(request, f'Рецепт "{recipe.title}" успешно удалён!')
+        return super().delete(request, *args, **kwargs)
+
+class MyRecipesListView(LoginRequiredMixin, ListView):
+    model = Recipe
+    template_name = 'cooking_blog/my_recipes.html'
+    context_object_name = 'recipes'
+    
+    def get_queryset(self):
+        return Recipe.objects.filter(author=self.request.user, is_published=True)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Мои рецепты'
+        context['recipes_title'] = 'Мои рецепты'
+        context['recipes_subtitle'] = f'Всего рецептов: {self.get_queryset().count()}'
+        return context
+
+class TagRecipesListView(ListView):
+    model = Recipe
+    template_name = 'cooking_blog/tag_recipes.html'
+    context_object_name = 'recipes'
+    
+    def get_queryset(self):
+        self.tag = get_object_or_404(Tag, slug=self.kwargs.get('slug'))
+        return self.tag.recipes.filter(is_published=True)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tag'] = self.tag
+        context['title'] = f'Рецепты с тегом: {self.tag.name}'
+        context['recipes_title'] = f'#{self.tag.name}'
+        context['recipes_subtitle'] = f'Найдено рецептов: {self.get_queryset().count()}'
+        return context
+
+def add_comment(request, pk):
+    recipe = get_object_or_404(Recipe, pk=pk)
+    
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.author = request.user
+            comment.recipe = recipe
+            comment.save()
+            messages.success(request, 'Ваш комментарий успешно добавлен!')
+        else:
+            messages.error(request, 'Ошибка при добавлении комментария. Попробуйте снова.')
+        
+        return redirect('recipe_detail', pk=pk)
 
 def contact(request):
     if request.method == 'POST':
@@ -63,11 +178,13 @@ def contact(request):
             email = form.cleaned_data['email']
             text = form.cleaned_data['text']
             
-            print(f'Данные')
+            print('=' * 50)
+            print(f'НОВОЕ СООБЩЕНИЕ С САЙТА ACooking')
             print(f'От: {email}')
             print(f'Тема: {subject}')
             print(f'Сообщение:')
             print(text)
+            print('=' * 50)
             
             messages.success(request, 'Ваше сообщение успешно отправлено! Мы ответим вам в ближайшее время.')
             return redirect('contact')
@@ -82,73 +199,6 @@ def contact(request):
         'subtitle': 'Задайте вопрос, оставьте отзыв или поделитесь идеей рецепта',
     }
     return render(request, 'cooking_blog/contact.html', context)
-
-@login_required
-def recipe_create(request):
-    if request.method == 'POST':
-        form = RecipeForm(request.POST, request.FILES)
-        if form.is_valid():
-            recipe = form.save(commit=False)
-            recipe.author = request.user
-            recipe.save()
-            
-            tags_input = form.cleaned_data.get('tags_input')
-            if tags_input:
-                tag_names = [t.strip().lower() for t in tags_input.split(',')]
-                for tag_name in tag_names:
-                    tag, created = Tag.objects.get_or_create(name=tag_name)
-                    recipe.tags.add(tag)
-            
-            messages.success(request, f'Рецепт "{recipe.title}" успешно создан!')
-            return redirect('recipe_detail', pk=recipe.pk)
-        else:
-            messages.error(request, 'Ошибка при создании рецепта. Проверьте заполнение полей.')
-    else:
-        form = RecipeForm()
-    
-    context = {
-        'form': form,
-        'title': 'Создание нового рецепта',
-        'button_text': 'Создать рецепт',
-    }
-    return render(request, 'cooking_blog/recipe_form.html', context)
-
-@login_required
-def recipe_edit(request, pk):
-    recipe = get_object_or_404(Recipe, pk=pk)
-    
-    if recipe.author != request.user:
-        messages.error(request, 'Вы не можете редактировать чужой рецепт.')
-        return redirect('recipe_detail', pk=pk)
-    
-    if request.method == 'POST':
-        form = RecipeForm(request.POST, request.FILES, instance=recipe)
-        if form.is_valid():
-            recipe = form.save()
-            
-            recipe.tags.clear()
-            tags_input = form.cleaned_data.get('tags_input')
-            if tags_input:
-                tag_names = [t.strip().lower() for t in tags_input.split(',')]
-                for tag_name in tag_names:
-                    tag, created = Tag.objects.get_or_create(name=tag_name)
-                    recipe.tags.add(tag)
-            
-            messages.success(request, f'Рецепт "{recipe.title}" успешно обновлён!')
-            return redirect('recipe_detail', pk=recipe.pk)
-        else:
-            messages.error(request, 'Ошибка при обновлении рецепта.')
-    else:
-        initial_tags = ', '.join([tag.name for tag in recipe.tags.all()])
-        form = RecipeForm(instance=recipe, initial={'tags_input': initial_tags})
-    
-    context = {
-        'form': form,
-        'title': 'Редактирование рецепта',
-        'button_text': 'Сохранить изменения',
-        'recipe': recipe,
-    }
-    return render(request, 'cooking_blog/recipe_form.html', context)
 
 def register(request):
     if request.method == 'POST':
@@ -169,43 +219,12 @@ def register(request):
     }
     return render(request, 'registration/register.html', context)
 
-@login_required
-def my_recipes(request):
-    recipes = Recipe.objects.filter(author=request.user, is_published=True)
-    
+def categories(request):
     context = {
-        'title': 'Мои рецепты',
-        'recipes': recipes,
-        'recipes_title': 'Мои рецепты',
-        'recipes_subtitle': f'Всего рецептов: {recipes.count()}',
+        'categories': [
+            {'name': 'Завтраки', 'description': 'Каши, смузи и полезные сэндвичи', 'count': 12},
+            {'name': 'Салаты', 'description': 'Салаты из свежих овощей, зелени и полезных заправок', 'count': 8},
+            {'name': 'Супы', 'description': 'Лёгкие овощные супы и сытные мясные', 'count': 6},
+        ]
     }
-    return render(request, 'cooking_blog/my_recipes.html', context)
-
-def tag_recipes(request, slug):
-    tag = get_object_or_404(Tag, slug=slug)
-    recipes = tag.recipes.filter(is_published=True)
-    
-    context = {
-        'tag': tag,
-        'recipes': recipes,
-        'title': f'Рецепты с тегом: {tag.name}',
-        'recipes_title': f'#{tag.name}',
-        'recipes_subtitle': f'Найдено рецептов: {recipes.count()}',
-    }
-    return render(request, 'cooking_blog/tag_recipes.html', context)
-
-def add_comment(request, pk):
-    recipe = get_object_or_404(Recipe, pk=pk)
-    
-    if request.method == 'POST':
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.author = request.user
-            comment.recipe = recipe
-            comment.save()
-            messages.success(request, 'Ваш комментарий успешно добавлен!')
-        else:
-            messages.error(request, 'Ошибка при добавлении комментария. Попробуйте снова.')
-        
-        return redirect('recipe_detail', pk=pk)
+    return render(request, 'cooking_blog/categories.html', context)
